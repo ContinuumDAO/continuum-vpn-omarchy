@@ -2,7 +2,6 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import Quickshell
-import Quickshell.Io
 import qs.Commons
 import qs.Ui
 
@@ -10,9 +9,6 @@ Panel {
   id: root
   moduleName: "continuum.vpn"
   ipcTarget: "continuum.vpn"
-  // This Omarchy build exposes ShellIpc, not IpcHandler. The Panel base
-  // would register a second handler on the same target, so that stays off.
-  manageIpc: false
 
   property int configIndex: 0
 
@@ -44,19 +40,6 @@ Panel {
   implicitHeight: button.implicitHeight
 
   Service { id: vpn }
-
-  ShellIpc {
-    target: root.ipcTarget
-    function open(): void { root.open() }
-    function close(): void { root.close() }
-    function show(): void { root.open() }
-    function hide(): void { root.close() }
-    function toggle(): string { return vpn.toggle() ? "ok" : "error: " + vpn.actionRejection }
-    function refresh(): string { return vpn.refresh() ? "ok" : "error: " + vpn.actionRejection }
-    function status(): string { return vpn.statusText }
-    function importPick(): string { return vpn.importPick() ? "ok" : "error: " + vpn.actionRejection }
-    function importPaste(): string { return vpn.importPaste() ? "ok" : "error: " + vpn.actionRejection }
-  }
 
   BarIconButton {
     id: button
