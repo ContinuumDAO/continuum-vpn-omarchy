@@ -23,9 +23,16 @@ Item {
   }
   readonly property string activeLabel: {
     for (var i = 0; i < profiles.length; i++) {
-      if (profiles[i].active) return profiles[i].label
+      if (profiles[i].active) return profileCaption(profiles[i])
     }
     return ""
+  }
+
+  function profileCaption(profile) {
+    var code = profile && profile.countryCode ? String(profile.countryCode) : ""
+    if (code === "") return profile ? String(profile.label || "") : ""
+    var flag = profile.countryFlag ? String(profile.countryFlag) : ""
+    return (flag !== "" ? flag + " " : "") + code + "  " + String(profile.label || "")
   }
   readonly property string statusText: active ? "VPN: " + activeLabel : "VPN disconnected"
 

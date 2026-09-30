@@ -64,6 +64,7 @@ import json, sys
 path, priv, pub = sys.argv[1:]
 json.dump({
   "label": "1.2.3.4",
+  "countryCode": "de",
   "source": "egress",
   "obfuscation": "shadowsocks",
   "iface": "1.2.3.4",
@@ -88,6 +89,9 @@ rows = {row["iface"]: row for row in json.loads(sys.argv[1])}
 assert rows["1.2.3.4"]["active"] is False
 assert rows["cont-full"]["obfuscation"] == "none"
 assert rows["1.2.3.4"]["label"] == "1.2.3.4"
+assert rows["1.2.3.4"]["countryCode"] == "DE"
+assert rows["1.2.3.4"]["countryFlag"] == "🇩🇪"
+assert rows["cont-full"]["countryCode"] == ""
 PY
 
 "$ROOT/backend.sh" up 1.2.3.4 >/dev/null

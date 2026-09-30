@@ -53,6 +53,15 @@ def fail(message: str) -> None:
     raise Reject(message)
 
 
+def country_code(value) -> str:
+    if value is None or str(value).strip() == "":
+        return ""
+    code = str(value).strip().upper()
+    if not re.fullmatch(r"[A-Z]{2}", code):
+        fail("countryCode must be an ISO 3166-1 alpha-2 code")
+    return code
+
+
 def parse_wg(text: str) -> dict:
     section = None
     interface: dict[str, str] = {}
@@ -166,6 +175,7 @@ def bundle_from_json(text: str) -> dict:
     if not IFACE_RE.fullmatch(iface):
         fail("iface must be 1-15 characters from [A-Za-z0-9_=+.-]")
     label = str(data.get("label") or iface).replace("\n", " ").strip() or iface
+    country = country_code(data.get("countryCode"))
     source = str(data.get("source") or "admin").strip()
     if source not in {"admin", "egress"}:
         fail("source must be admin or egress")
@@ -193,6 +203,7 @@ def bundle_from_json(text: str) -> dict:
     parse_wg(wg_text)
     return {
         "label": label,
+        "countryCode": country,
         "source": source,
         "obfuscation": obfuscation,
         "iface": iface,
@@ -215,6 +226,7 @@ def bundle_from_conf(text: str, filename: str) -> dict:
     body = text if text.endswith("\n") else text + "\n"
     return {
         "label": stem,
+        "countryCode": "",
         "source": "admin",
         "obfuscation": "none",
         "iface": stem,
@@ -245,6 +257,7 @@ def write_profile(profile: dict, dest_root: str) -> str:
             os.chmod(transport_path, 0o600)
         meta = {
             "label": profile["label"],
+            "countryCode": profile.get("countryCode") or "",
             "source": profile["source"],
             "obfuscation": profile["obfuscation"],
             "iface": iface,

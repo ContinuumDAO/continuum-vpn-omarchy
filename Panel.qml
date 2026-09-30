@@ -204,7 +204,7 @@ Panel {
 
                 Text {
                   Layout.fillWidth: true
-                  text: modelData.label
+                  text: vpn.profileCaption(modelData)
                   color: index === root.configIndex ? root.foreground : root.dim
                   font.family: root.fontFamily
                   font.pixelSize: Style.font.body

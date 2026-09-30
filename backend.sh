@@ -296,9 +296,17 @@ for name in names:
             capture_output=True, text=True,
         )
         active = state.returncode == 0 and state.stdout.startswith("activated")
+    code = str(meta.get("countryCode") or "").strip().upper()
+    if len(code) != 2 or not code.isalpha():
+        code = ""
+    flag = ""
+    if code:
+        flag = chr(0x1F1E6 + ord(code[0]) - ord("A")) + chr(0x1F1E6 + ord(code[1]) - ord("A"))
     rows.append({
         "iface": meta.get("iface") or name,
         "label": meta.get("label") or name,
+        "countryCode": code,
+        "countryFlag": flag,
         "obfuscation": meta.get("obfuscation") or "none",
         "active": active,
         "uuid": uuid,
