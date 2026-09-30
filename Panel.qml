@@ -115,13 +115,17 @@ Panel {
             meta: vpn.active ? vpn.activeLabel : "Disconnected"
             foreground: root.foreground
             fontFamily: root.fontFamily
-            iconOpacity: vpn.active ? 1.0 : 0.5
+            iconOpacity: 1
             iconComponent: Component {
-              Text {
-                text: "󰖂"
-                color: root.foreground
-                font.family: root.fontFamily
-                font.pixelSize: Style.font.display
+              Image {
+                source: Qt.resolvedUrl("logo.png")
+                sourceSize.width: 256
+                sourceSize.height: 256
+                width: Style.font.display
+                height: Style.font.display
+                fillMode: Image.PreserveAspectFit
+                smooth: true
+                mipmap: true
               }
             }
             trailingControl: Component {
