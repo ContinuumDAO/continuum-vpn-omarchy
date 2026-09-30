@@ -33,6 +33,12 @@ Panel {
     else vpn.connectTo(profile.iface)
   }
 
+  // The bar hides a slot whose item reports no size. The button is anchored
+  // to fill this item, so the item has to copy the button's own size or the
+  // icon shows for one layout pass and then disappears.
+  implicitWidth: button.implicitWidth
+  implicitHeight: button.implicitHeight
+
   Service { id: vpn }
 
   IpcHandler {
