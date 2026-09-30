@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import Quickshell
+import Quickshell.Io
 import qs.Commons
 import qs.Ui
 
@@ -9,9 +10,8 @@ Panel {
   id: root
   moduleName: "continuum.vpn"
   ipcTarget: "continuum.vpn"
-  // The Panel base also registers open/close/toggle on ipcTarget. Leaving
-  // that on, next to the IpcHandler below, makes the shell drop the widget
-  // shortly after it appears.
+  // This Omarchy build exposes ShellIpc, not IpcHandler. The Panel base
+  // would register a second handler on the same target, so that stays off.
   manageIpc: false
 
   property int configIndex: 0
@@ -45,7 +45,7 @@ Panel {
 
   Service { id: vpn }
 
-  IpcHandler {
+  ShellIpc {
     target: root.ipcTarget
     function open(): void { root.open() }
     function close(): void { root.close() }
