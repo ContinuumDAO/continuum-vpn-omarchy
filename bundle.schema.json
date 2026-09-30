@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ContinuumDAO/continuum-vpn-omarchy/blob/main/bundle.schema.json",
+  "title": "Continuum VPN profile bundle",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["label", "source", "obfuscation", "iface", "wireGuardConfig"],
+  "properties": {
+    "label": { "type": "string", "minLength": 1 },
+    "source": { "enum": ["admin", "egress"] },
+    "obfuscation": { "enum": ["none", "shadowsocks", "wg_obfuscator", "lwo", "udp2raw"] },
+    "iface": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_=+.\\-]{1,15}$"
+    },
+    "wireGuardConfig": { "type": "string", "minLength": 1 },
+    "transportBinary": { "type": "string" },
+    "transportFilename": { "type": "string" },
+    "transportConfig": { "type": "string" }
+  }
+}

@@ -1,0 +1,6 @@
+#!/bin/sh
+if [ "${CONTINUUM_VPN_SS_FAIL:-}" = 1 ]; then
+  exit 0
+fi
+echo "LISTEN 0 0 127.0.0.1:9"
+exit 0

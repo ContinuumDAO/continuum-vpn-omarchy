@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "id": "continuum.vpn",
+  "name": "Continuum VPN",
+  "version": "0.1.0",
+  "description": "Import Continuum VPN bundles and switch the active exit from the Omarchy bar.",
+  "kinds": ["bar-widget"],
+  "entryPoints": {
+    "barWidget": "Panel.qml"
+  },
+  "barWidget": {
+    "displayName": "Continuum VPN",
+    "description": "Turn a Continuum node or egress exit on or off. Obfuscation proxies start as your user.",
+    "category": "Network",
+    "allowMultiple": false,
+    "defaultSection": "right"
+  }
+}
