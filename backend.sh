@@ -307,6 +307,7 @@ for name in names:
         "label": meta.get("label") or name,
         "countryCode": code,
         "countryFlag": flag,
+        "detail": str(meta.get("detail") or "").strip(),
         "obfuscation": meta.get("obfuscation") or "none",
         "active": active,
         "uuid": uuid,

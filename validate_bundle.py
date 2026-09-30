@@ -53,6 +53,11 @@ def fail(message: str) -> None:
     raise Reject(message)
 
 
+def detail_text(value) -> str:
+    text = " ".join(str(value or "").split())
+    return text[:180].rstrip()
+
+
 def country_code(value) -> str:
     if value is None or str(value).strip() == "":
         return ""
@@ -176,6 +181,7 @@ def bundle_from_json(text: str) -> dict:
         fail("iface must be 1-15 characters from [A-Za-z0-9_=+.-]")
     label = str(data.get("label") or iface).replace("\n", " ").strip() or iface
     country = country_code(data.get("countryCode"))
+    detail = detail_text(data.get("detail"))
     source = str(data.get("source") or "admin").strip()
     if source not in {"admin", "egress"}:
         fail("source must be admin or egress")
@@ -204,6 +210,7 @@ def bundle_from_json(text: str) -> dict:
     return {
         "label": label,
         "countryCode": country,
+        "detail": detail,
         "source": source,
         "obfuscation": obfuscation,
         "iface": iface,
@@ -227,6 +234,7 @@ def bundle_from_conf(text: str, filename: str) -> dict:
     return {
         "label": stem,
         "countryCode": "",
+        "detail": "",
         "source": "admin",
         "obfuscation": "none",
         "iface": stem,
@@ -258,6 +266,7 @@ def write_profile(profile: dict, dest_root: str) -> str:
         meta = {
             "label": profile["label"],
             "countryCode": profile.get("countryCode") or "",
+            "detail": profile.get("detail") or "",
             "source": profile["source"],
             "obfuscation": profile["obfuscation"],
             "iface": iface,

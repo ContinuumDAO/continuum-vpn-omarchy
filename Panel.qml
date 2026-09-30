@@ -202,13 +202,27 @@ Panel {
                 width: parent.width
                 spacing: Style.space(8)
 
-                Text {
+                ColumnLayout {
                   Layout.fillWidth: true
-                  text: vpn.profileCaption(modelData)
-                  color: index === root.configIndex ? root.foreground : root.dim
-                  font.family: root.fontFamily
-                  font.pixelSize: Style.font.body
-                  elide: Text.ElideRight
+                  Layout.alignment: Qt.AlignVCenter
+                  spacing: Style.space(2)
+
+                  Text {
+                    Layout.fillWidth: true
+                    text: vpn.profileCaption(modelData)
+                    color: index === root.configIndex ? root.foreground : root.dim
+                    font.family: root.fontFamily
+                    font.pixelSize: Style.font.body
+                    elide: Text.ElideRight
+                  }
+                  Text {
+                    Layout.fillWidth: true
+                    text: vpn.profileDetail(modelData)
+                    wrapMode: Text.WordWrap
+                    color: root.dim
+                    font.family: root.fontFamily
+                    font.pixelSize: Style.font.caption
+                  }
                 }
                 ToggleSwitch {
                   checked: modelData.active

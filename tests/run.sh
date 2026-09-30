@@ -65,6 +65,7 @@ path, priv, pub = sys.argv[1:]
 json.dump({
   "label": "1.2.3.4",
   "countryCode": "de",
+  "detail": "WireGuard, with Shadowsocks and ad/tracking blocking with Blocky",
   "source": "egress",
   "obfuscation": "shadowsocks",
   "iface": "1.2.3.4",
@@ -91,6 +92,8 @@ assert rows["cont-full"]["obfuscation"] == "none"
 assert rows["1.2.3.4"]["label"] == "1.2.3.4"
 assert rows["1.2.3.4"]["countryCode"] == "DE"
 assert rows["1.2.3.4"]["countryFlag"] == "🇩🇪"
+assert rows["1.2.3.4"]["detail"] == "WireGuard, with Shadowsocks and ad/tracking blocking with Blocky"
+assert rows["cont-full"]["detail"] == ""
 assert rows["cont-full"]["countryCode"] == ""
 PY
 

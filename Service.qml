@@ -34,6 +34,17 @@ Item {
     var flag = profile.countryFlag ? String(profile.countryFlag) : ""
     return (flag !== "" ? flag + " " : "") + code + "  " + String(profile.label || "")
   }
+
+  function profileDetail(profile) {
+    var stored = profile && profile.detail ? String(profile.detail) : ""
+    if (stored !== "") return stored
+    var obfuscation = profile && profile.obfuscation ? String(profile.obfuscation) : "none"
+    if (obfuscation === "shadowsocks") return "WireGuard, with Shadowsocks"
+    if (obfuscation === "wg_obfuscator") return "WireGuard, with wg-obfuscator"
+    if (obfuscation === "lwo") return "WireGuard, with LWO"
+    if (obfuscation === "udp2raw") return "WireGuard, with udp2raw"
+    return "WireGuard"
+  }
   readonly property string statusText: active ? "VPN: " + activeLabel : "VPN disconnected"
 
   function reject(reason) {
