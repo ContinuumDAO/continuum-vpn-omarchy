@@ -9,6 +9,10 @@ Panel {
   id: root
   moduleName: "continuum.vpn"
   ipcTarget: "continuum.vpn"
+  // The Panel base also registers open/close/toggle on ipcTarget. Leaving
+  // that on, next to the IpcHandler below, makes the shell drop the widget
+  // shortly after it appears.
+  manageIpc: false
 
   property int configIndex: 0
 
