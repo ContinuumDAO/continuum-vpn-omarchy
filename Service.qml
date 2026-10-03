@@ -23,7 +23,7 @@ Item {
   }
   readonly property string activeLabel: {
     for (var i = 0; i < profiles.length; i++) {
-      if (profiles[i].active) return profileCaption(profiles[i])
+      if (profiles[i].active) return String(profiles[i].label || profiles[i].iface || "")
     }
     return ""
   }
@@ -99,6 +99,25 @@ Item {
 
   function disconnect(iface) {
     return run(["down", iface])
+  }
+
+  function remove(iface) {
+    return run(["delete", iface])
+  }
+
+  function obfuscationLabel(profile) {
+    var name = profile && profile.obfuscation ? String(profile.obfuscation) : "none"
+    if (name === "none") return "None"
+    if (name === "shadowsocks") return "Shadowsocks"
+    if (name === "wg_obfuscator") return "wg-obfuscator"
+    if (name === "lwo") return "LWO"
+    if (name === "udp2raw") return "udp2raw"
+    return name
+  }
+
+  function shown(value) {
+    var text = value ? String(value).trim() : ""
+    return text !== "" ? text : "—"
   }
 
   function toggle() {

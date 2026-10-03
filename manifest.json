@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "continuum.vpn",
   "name": "Continuum VPN",
-  "version": "0.1.6",
+  "version": "0.2.0",
   "description": "Import Continuum VPN bundles and switch the active exit from the Omarchy bar.",
   "kinds": ["bar-widget"],
   "entryPoints": {

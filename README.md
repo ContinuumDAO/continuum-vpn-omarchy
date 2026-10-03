@@ -18,7 +18,7 @@ omarchy plugin enable continuum.vpn
 1. In the node app VPN panel, choose Linux, then Omarchy, and download the bundle.
 2. Click the card on the bar.
 3. Import the `continuum-vpn-*.json` file, or paste it. A plain WireGuard `.conf` whose name is a valid interface name also imports.
-4. Use the switch on a row. One profile is up at a time.
+4. Each saved VPN is a row: country flag, country, obfuscation, ad blocking, rate limit, and endpoint. Green ON and red OFF are separate. The badge at the top right switches the selected VPN. One profile is up at a time. Import does not connect. The dustbin asks before it deletes a row.
 
 For a Shadowsocks profile, install `shadowsocks-rust` from the official Extra repository. That package provides `sslocal`. The plugin starts it as your user, waits until it listens, then asks NetworkManager to bring the tunnel up. No sudo and no `wg-quick`.
 

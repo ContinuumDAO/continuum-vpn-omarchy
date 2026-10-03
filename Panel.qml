@@ -11,6 +11,8 @@ Panel {
   ipcTarget: "continuum.vpn"
 
   property int configIndex: 0
+  property string pendingDelete: ""
+  property string pendingDeleteLabel: ""
 
   readonly property color foreground: bar ? bar.foreground : Color.foreground
   readonly property color urgent: bar ? bar.urgent : Color.urgent
@@ -71,8 +73,8 @@ Panel {
     bar: root.bar
     open: root.opened
     focusTarget: keyCatcher
-    contentWidth: panel.fittedContentWidth(Style.space(360))
-    contentHeight: panel.fittedContentHeight(column.implicitHeight, Style.space(420))
+    contentWidth: panel.fittedContentWidth(Style.space(520))
+    contentHeight: panel.fittedContentHeight(column.implicitHeight, Style.space(560))
 
     PanelKeyCatcher {
       id: keyCatcher
@@ -112,7 +114,7 @@ Panel {
           PanelHero {
             width: parent.width
             title: "Continuum VPN"
-            meta: vpn.active ? vpn.activeLabel : "Disconnected"
+            meta: ""
             foreground: root.foreground
             fontFamily: root.fontFamily
             iconOpacity: 1
@@ -129,12 +131,29 @@ Panel {
               }
             }
             trailingControl: Component {
-              ToggleSwitch {
-                visible: vpn.profiles.length > 0
-                checked: vpn.active
-                busy: vpn.busy
-                foreground: root.foreground
-                onToggled: vpn.toggle()
+              Rectangle {
+                id: statusBadge
+                readonly property string caption: vpn.active ? ("Connected to " + vpn.activeLabel) : "Disconnected"
+                implicitWidth: statusText.implicitWidth + Style.space(28)
+                implicitHeight: Math.max(statusText.implicitHeight + Style.space(12), Style.space(32))
+                radius: height / 2
+                color: vpn.active ? "#1e8e3e" : "#c5221f"
+                opacity: vpn.profiles.length > 0 && !vpn.busy ? 1 : 0.55
+                Text {
+                  id: statusText
+                  anchors.centerIn: parent
+                  text: statusBadge.caption
+                  color: "#ffffff"
+                  font.family: root.fontFamily
+                  font.pixelSize: Style.font.caption
+                  font.bold: true
+                }
+                MouseArea {
+                  anchors.fill: parent
+                  enabled: vpn.profiles.length > 0 && !vpn.busy
+                  cursorShape: Qt.PointingHandCursor
+                  onClicked: vpn.toggle()
+                }
               }
             }
           }
@@ -192,45 +211,172 @@ Panel {
 
           Column {
             width: parent.width
-            spacing: Style.space(6)
+            spacing: Style.space(8)
             visible: vpn.profiles.length > 0
+
+            RowLayout {
+              width: parent.width
+              visible: root.pendingDelete !== ""
+              spacing: Style.space(8)
+              Text {
+                Layout.fillWidth: true
+                wrapMode: Text.WordWrap
+                text: "Delete " + root.pendingDeleteLabel + "?"
+                color: root.foreground
+                font.family: root.fontFamily
+                font.pixelSize: Style.font.bodySmall
+              }
+              PanelActionButton {
+                iconText: "No"
+                tooltipText: "Keep this VPN"
+                foreground: root.dim
+                hoverColor: root.foreground
+                fontFamily: root.fontFamily
+                onClicked: root.pendingDelete = ""
+              }
+              PanelActionButton {
+                iconText: "Yes"
+                tooltipText: "Delete this VPN"
+                foreground: root.urgent
+                hoverColor: root.urgent
+                fontFamily: root.fontFamily
+                enabled: !vpn.busy
+                onClicked: {
+                  var iface = root.pendingDelete
+                  root.pendingDelete = ""
+                  vpn.remove(iface)
+                }
+              }
+            }
+
             Repeater {
               model: vpn.profiles
-              RowLayout {
+              Rectangle {
+                id: profileCard
                 required property var modelData
                 required property int index
                 width: parent.width
-                spacing: Style.space(8)
+                implicitHeight: card.implicitHeight + Style.space(16)
+                color: "transparent"
+                border.width: index === root.configIndex ? 1 : 0
+                border.color: root.dim
+                radius: Style.space(4)
 
-                ColumnLayout {
-                  Layout.fillWidth: true
-                  Layout.alignment: Qt.AlignVCenter
-                  spacing: Style.space(2)
+                RowLayout {
+                  id: card
+                  anchors.left: parent.left
+                  anchors.right: parent.right
+                  anchors.verticalCenter: parent.verticalCenter
+                  anchors.margins: Style.space(8)
+                  spacing: Style.space(10)
 
                   Text {
-                    Layout.fillWidth: true
-                    text: vpn.profileCaption(modelData)
-                    color: index === root.configIndex ? root.foreground : root.dim
-                    font.family: root.fontFamily
-                    font.pixelSize: Style.font.body
-                    elide: Text.ElideRight
+                    text: modelData.countryFlag ? modelData.countryFlag : "—"
+                    color: root.foreground
+                    font.pixelSize: Style.font.display
+                    Layout.alignment: Qt.AlignVCenter
+                    Layout.preferredWidth: Style.space(36)
+                    horizontalAlignment: Text.AlignHCenter
                   }
-                  Text {
+
+                  ColumnLayout {
                     Layout.fillWidth: true
-                    text: vpn.profileDetail(modelData)
-                    wrapMode: Text.WordWrap
-                    color: root.dim
-                    font.family: root.fontFamily
-                    font.pixelSize: Style.font.caption
+                    spacing: Style.space(2)
+                    Repeater {
+                      model: [
+                        { name: "Name", value: vpn.shown(modelData.label) },
+                        { name: "Country", value: vpn.shown(modelData.countryCode) },
+                        { name: "Obfuscation", value: vpn.obfuscationLabel(modelData) },
+                        { name: "Ad blocking", value: vpn.shown(modelData.adBlock) },
+                        { name: "Rate limit", value: vpn.shown(modelData.rateLimit) },
+                        { name: "Endpoint", value: vpn.shown(modelData.endpoint) }
+                      ]
+                      RowLayout {
+                        required property var modelData
+                        Layout.fillWidth: true
+                        spacing: Style.space(8)
+                        Text {
+                          text: modelData.name
+                          color: root.dim
+                          font.family: root.fontFamily
+                          font.pixelSize: Style.font.caption
+                          Layout.preferredWidth: Style.space(92)
+                        }
+                        Text {
+                          text: modelData.value
+                          color: profileCard.index === root.configIndex ? root.foreground : root.dim
+                          font.family: root.fontFamily
+                          font.pixelSize: Style.font.caption
+                          elide: Text.ElideRight
+                          Layout.fillWidth: true
+                        }
+                      }
+                    }
                   }
-                }
-                ToggleSwitch {
-                  checked: modelData.active
-                  busy: vpn.busy
-                  foreground: root.foreground
-                  onToggled: {
-                    if (modelData.active) vpn.disconnect(modelData.iface)
-                    else vpn.connectTo(modelData.iface)
+
+                  ColumnLayout {
+                    spacing: Style.space(6)
+                    Layout.alignment: Qt.AlignVCenter
+
+                    Rectangle {
+                      implicitWidth: Style.space(64)
+                      implicitHeight: Style.space(28)
+                      radius: Style.space(4)
+                      color: "#1e8e3e"
+                      border.width: modelData.active ? 2 : 0
+                      border.color: "#ffffff"
+                      Text {
+                        anchors.centerIn: parent
+                        text: "ON"
+                        color: "#ffffff"
+                        font.family: root.fontFamily
+                        font.pixelSize: Style.font.caption
+                        font.bold: true
+                      }
+                      MouseArea {
+                        anchors.fill: parent
+                        enabled: !vpn.busy && !modelData.active
+                        cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
+                        onClicked: vpn.connectTo(modelData.iface)
+                      }
+                    }
+
+                    Rectangle {
+                      implicitWidth: Style.space(64)
+                      implicitHeight: Style.space(28)
+                      radius: Style.space(4)
+                      color: "#c5221f"
+                      border.width: modelData.active ? 0 : 2
+                      border.color: "#ffffff"
+                      Text {
+                        anchors.centerIn: parent
+                        text: "OFF"
+                        color: "#ffffff"
+                        font.family: root.fontFamily
+                        font.pixelSize: Style.font.caption
+                        font.bold: true
+                      }
+                      MouseArea {
+                        anchors.fill: parent
+                        enabled: !vpn.busy && modelData.active
+                        cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
+                        onClicked: vpn.disconnect(modelData.iface)
+                      }
+                    }
+                  }
+
+                  PanelActionButton {
+                    iconText: "⌫"
+                    tooltipText: "Delete"
+                    foreground: root.dim
+                    hoverColor: root.urgent
+                    fontFamily: root.fontFamily
+                    enabled: !vpn.busy
+                    Layout.alignment: Qt.AlignVCenter
+                    onClicked: {
+                      root.pendingDelete = modelData.iface
+                      root.pendingDeleteLabel = modelData.label || modelData.iface
+                    }
                   }
                 }
               }

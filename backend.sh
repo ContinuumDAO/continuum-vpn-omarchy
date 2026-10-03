@@ -94,6 +94,8 @@ import_staged() {
   uuid="$(nmcli -g connection.uuid connection show "$iface")"
   [[ -n "$uuid" ]] || die "NetworkManager did not return a connection uuid"
   nmcli connection modify "$uuid" connection.id "$label" connection.interface-name "$iface" connection.autoconnect no
+  # Import brings the tunnel up. Leave it down until the user turns it on.
+  nmcli connection down "$uuid" >/dev/null 2>&1 || true
   meta_set "$meta" nmUuid "$uuid"
   printf '%s\n' "$label"
 }
@@ -272,10 +274,28 @@ cmd_down() {
   printf '%s\n' "$(meta_get "$meta" label)"
 }
 
+cmd_delete() {
+  local iface="$1"
+  [[ "$iface" =~ ^[A-Za-z0-9_=+.-]{1,15}$ ]] || die "invalid profile name"
+  local dir="$PROFILES/$iface"
+  local meta="$dir/meta.json"
+  [[ -f "$meta" ]] || die "unknown profile $iface"
+  cmd_down "$iface" >/dev/null
+  local uuid
+  uuid="$(meta_get "$meta" nmUuid)"
+  if [[ -n "$uuid" ]]; then
+    nmcli connection delete "$uuid" >/dev/null 2>&1 || true
+  fi
+  delete_iface_connections "$iface"
+  stop_proxy "$iface"
+  rm -rf "$dir"
+  printf '%s\n' "$iface"
+}
+
 cmd_list() {
   ensure_dirs
   python3 - "$PROFILES" <<'PY'
-import json, os, subprocess, sys
+import json, os, re, subprocess, sys
 root = sys.argv[1]
 rows = []
 if os.path.isdir(root):
@@ -302,13 +322,36 @@ for name in names:
     flag = ""
     if code:
         flag = chr(0x1F1E6 + ord(code[0]) - ord("A")) + chr(0x1F1E6 + ord(code[1]) - ord("A"))
+    detail = str(meta.get("detail") or "").strip()
+    rate = ""
+    rate_match = re.search(r"limited to ([0-9]+(?:\.[0-9]+)?) Mbps", detail)
+    if rate_match:
+        rate = rate_match.group(1) + " Mbps"
+    ad_block = ""
+    ad_match = re.search(r"ad/tracking blocking with ([A-Za-z0-9.+-]+)", detail)
+    if ad_match:
+        ad_block = ad_match.group(1)
+    endpoint = ""
+    wg_path = os.path.join(root, name, "wg.conf")
+    if os.path.isfile(wg_path):
+        for raw in open(wg_path, encoding="utf-8"):
+            line = raw.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            key, value = line.split("=", 1)
+            if key.strip().lower() == "endpoint":
+                endpoint = value.strip()
+                break
     rows.append({
         "iface": meta.get("iface") or name,
         "label": meta.get("label") or name,
         "countryCode": code,
         "countryFlag": flag,
-        "detail": str(meta.get("detail") or "").strip(),
+        "detail": detail,
         "obfuscation": meta.get("obfuscation") or "none",
+        "adBlock": ad_block,
+        "rateLimit": rate,
+        "endpoint": endpoint,
         "active": active,
         "uuid": uuid,
     })
@@ -317,7 +360,7 @@ PY
 }
 
 usage() {
-  die "usage: backend.sh list|up IFACE|down IFACE|import-file PATH|import-text [NAME]|import-pick|import-paste"
+  die "usage: backend.sh list|up IFACE|down IFACE|delete IFACE|import-file PATH|import-text [NAME]|import-pick|import-paste"
 }
 
 main() {
@@ -326,6 +369,7 @@ main() {
     list) cmd_list ;;
     up) [[ $# -eq 2 ]] || usage; cmd_up "$2" ;;
     down) [[ $# -eq 2 ]] || usage; cmd_down "$2" ;;
+    delete) [[ $# -eq 2 ]] || usage; cmd_delete "$2" ;;
     import-file) [[ $# -eq 2 ]] || usage; cmd_import_file "$2" ;;
     import-text) cmd_import_text "${2:-pasted.conf}" ;;
     import-pick) cmd_import_pick ;;

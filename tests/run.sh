@@ -65,7 +65,7 @@ path, priv, pub = sys.argv[1:]
 json.dump({
   "label": "1.2.3.4",
   "countryCode": "de",
-  "detail": "WireGuard, with Shadowsocks and ad/tracking blocking with Blocky",
+  "detail": "WireGuard, with Shadowsocks and ad/tracking blocking with Blocky, limited to 20 Mbps",
   "source": "egress",
   "obfuscation": "shadowsocks",
   "iface": "1.2.3.4",
@@ -92,9 +92,13 @@ assert rows["cont-full"]["obfuscation"] == "none"
 assert rows["1.2.3.4"]["label"] == "1.2.3.4"
 assert rows["1.2.3.4"]["countryCode"] == "DE"
 assert rows["1.2.3.4"]["countryFlag"] == "🇩🇪"
-assert rows["1.2.3.4"]["detail"] == "WireGuard, with Shadowsocks and ad/tracking blocking with Blocky"
+assert rows["1.2.3.4"]["detail"] == "WireGuard, with Shadowsocks and ad/tracking blocking with Blocky, limited to 20 Mbps"
+assert rows["1.2.3.4"]["adBlock"] == "Blocky"
+assert rows["1.2.3.4"]["rateLimit"] == "20 Mbps"
+assert rows["1.2.3.4"]["endpoint"] == "127.0.0.1:51821"
 assert rows["cont-full"]["detail"] == ""
 assert rows["cont-full"]["countryCode"] == ""
+assert rows["cont-full"]["rateLimit"] == ""
 PY
 
 "$ROOT/backend.sh" up 1.2.3.4 >/dev/null
@@ -121,5 +125,46 @@ if compgen -G "$CONTINUUM_VPN_RUNTIME_DIR/*.pid" >/dev/null; then
   echo "proxy pid file left behind" >&2
   exit 1
 fi
+
+"$ROOT/backend.sh" delete cont-full >/dev/null
+LIST="$("$ROOT/backend.sh" list)"
+python3 - "$LIST" <<'PY'
+import json, sys
+rows = {row["iface"]: row for row in json.loads(sys.argv[1])}
+assert "cont-full" not in rows
+assert "1.2.3.4" in rows
+assert rows["1.2.3.4"]["active"] is False
+PY
+
+PASTE_A="$("$ROOT/backend.sh" import-text pasted.conf <<EOF
+[Interface]
+PrivateKey = $PRIV
+Address = 10.8.0.3/32
+[Peer]
+PublicKey = $PUB
+Endpoint = 203.0.113.9:51820
+AllowedIPs = 0.0.0.0/0
+EOF
+)"
+PASTE_B="$("$ROOT/backend.sh" import-text pasted.conf <<EOF
+[Interface]
+PrivateKey = $PRIV
+Address = 10.8.0.4/32
+[Peer]
+PublicKey = $PUB
+Endpoint = 198.51.100.20:51820
+AllowedIPs = 0.0.0.0/0
+EOF
+)"
+[[ "$PASTE_A" == "203.0.113.9" ]]
+[[ "$PASTE_B" == "198.51.100.20" ]]
+LIST="$("$ROOT/backend.sh" list)"
+python3 - "$LIST" <<'PY'
+import json, sys
+rows = {row["iface"]: row for row in json.loads(sys.argv[1])}
+assert "203.0.113.9" in rows
+assert "198.51.100.20" in rows
+assert rows["203.0.113.9"]["endpoint"] == "203.0.113.9:51820"
+PY
 
 echo "ok"
