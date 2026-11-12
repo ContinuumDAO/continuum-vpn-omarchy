@@ -196,6 +196,17 @@ start_proxy() {
   command -v "$binary" >/dev/null 2>&1 || die "$binary is not on PATH"
   case "$binary" in
     sslocal|shadowsocks-rust.sslocal)
+      python3 - "$transport" <<'PY'
+import json, sys
+path = sys.argv[1]
+with open(path, encoding="utf-8") as handle:
+    data = json.load(handle)
+if isinstance(data, dict) and str(data.get("mode") or "").strip().lower() != "tcp_and_udp":
+    data["mode"] = "tcp_and_udp"
+    text = json.dumps(data, indent=2) + "\n"
+    with open(path, "w", encoding="utf-8") as handle:
+        handle.write(text)
+PY
       setsid "$binary" -c "$transport" >>"$log" 2>&1 </dev/null &
       ;;
     wg-obfuscator)
@@ -208,7 +219,7 @@ start_proxy() {
   echo $! >"$pidfile"
   local i
   for i in $(seq 1 50); do
-    if ss -ltnH "sport = :$port" 2>/dev/null | grep -q .; then
+    if ss -lnH "sport = :$port" 2>/dev/null | grep -q .; then
       return 0
     fi
     if ! kill -0 "$(cat "$pidfile")" 2>/dev/null; then
